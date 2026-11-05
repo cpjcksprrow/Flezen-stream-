@@ -1,0 +1,71 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Flezen Player</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<style>
+body{margin:0;background:#090d16;color:white;font-family:Arial;padding:18px}
+h2{color:#62d5ff}
+.player{background:#000;border-radius:14px;overflow:hidden;margin-top:25px}
+video{width:100%;aspect-ratio:16/9;background:#000}
+input{box-sizing:border-box;width:100%;padding:15px;margin-top:22px;border-radius:10px;border:1px solid #39475c;background:#151e2d;color:white}
+button{width:100%;padding:15px;margin-top:12px;border:0;border-radius:10px;background:#54caff;color:#07111b;font-weight:bold}
+small{color:#8c9aad}
+</style>
+</head>
+<body>
+<h2>▶ FLEZEN PLAYER</h2>
+<small>Telegram Video Player</small>
+<div class="player">
+<video id="v" controls playsinline></video>
+</div>
+<input id="url" placeholder="Paste MP4 / M3U8 video link">
+<button onclick="playVideo()">PLAY VIDEO</button>
+<p id="msg"></p>
+<script>
+const tg=window.Telegram?.WebApp;
+if(tg){tg.ready();tg.expand();}
+
+let hls=null;
+
+function playVideo(){
+ const link=document.getElementById('url').value.trim();
+ const v=document.getElementById('v');
+ const msg=document.getElementById('msg');
+
+ if(!link){msg.textContent='Paste video link first';return;}
+
+ try{
+  const u=new URL(link);
+  if(!['https:','http:'].includes(u.protocol))throw 0;
+ }catch(e){msg.textContent='Invalid video URL';return;}
+
+ if(hls){hls.destroy();hls=null;}
+ v.pause();
+ v.removeAttribute('src');
+ v.load();
+ msg.textContent='Loading video...';
+
+ if(/\.m3u8($|[?#])/i.test(link)&&Hls.isSupported()){
+  hls=new Hls();
+  hls.loadSource(link);
+  hls.attachMedia(v);
+  hls.on(Hls.Events.MANIFEST_PARSED,()=>{
+   v.play().catch(()=>{msg.textContent='Press play on video';});
+  });
+  hls.on(Hls.Events.ERROR,(_,data)=>{
+   if(data.fatal)msg.textContent='Video stream unavailable';
+  });
+ }else{
+  v.src=link;
+  v.play().then(()=>msg.textContent='Playing')
+   .catch(()=>msg.textContent='Tap play or check video link');
+ }
+}
+</script>
+</body>
+</html>
